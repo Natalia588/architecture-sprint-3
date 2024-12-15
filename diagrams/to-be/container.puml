@@ -1,0 +1,82 @@
+@startuml
+title Smart Home Monolith Context Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "User", "Frontend or Mobile App")
+
+System_Ext(cdn, "CDN", "CDN for video")
+
+
+System_Boundary(SmartHomeSystem, "Smart Home System") {
+    Container(api, "API Gateway", "Java, REST API", "Process requests from Frontend and Mobile App")
+    Container_Boundary(UserService, "User service") {
+        Container(userService, "User service", "Java","User service")
+        ContainerDb(userDb, "User DB", "PostgreSQL")
+        ContainerDb(userCache, "User cache", "Redis")
+    }
+    Container_Boundary(ConfigurationService, "Configuration service") {
+        Container(configuration, "Configuration service", "Java", "Managing smart home system")
+        ContainerDb(configurationDb, "Configuration DB", "PostgreSQL", "Store configuration")
+        ContainerDb(configurationCache, "Configuration cache", "Redis", "Config cache")
+    }
+    Container_Boundary(MonitoringService, "Monitoring service") {
+        Container(monitoring, "Monitoring service", "Java", "Monitoring smart home system")
+        ContainerDb(monitoringDb, "Monitoring DB", "PostgreSQL", "Store telemetry")
+        ContainerDb(monitoringCache, "Monitoring cache", "Redis", "Telemetry cache")
+    }
+    Container_Boundary(StreamingService, "Streaming service") {
+        Container(streaming, "Streaming service", "Nginx RTMP", "Streaming service for real-time video")
+    }
+    Container_Boundary(RegistrationService, "Registration service") {
+        Container(registration, "Registration service", "Java", "Registration service")
+        ContainerDb(registrationDb, "Registration DB", "PostgreSQL", "Store registrations")
+        ContainerDb(registrationCache, "Registration cache", "Redis", "Registrations cache")
+    }
+
+    Container_Boundary(MessageBus, "Message Bus") {
+        Container(message_bus, "Message Bus", "RabbitMQ", "Transport for devices events")
+    }
+}
+
+System_Boundary(Devices, "Smart Devices") {
+    System_Ext(sensors, "Temperature Sensors", "Temperature Sensors")
+    System_Ext(heatingSystem, "Heating System", "Heating Systems")
+    System_Ext(lights, "Light System", "Light Systems")
+    System_Ext(gates, "Gates", "Gates Systems")
+    System_Ext(cameras, "Cameras", "Video monitoring")
+}
+
+Rel_D(user, api, "Uses the system", "REST")
+Rel_R(user, cdn, "Watch video", "WebRTC")
+
+Rel(api, userService, "Register / Login user and (or) check permissions", "REST")
+Rel(api, registration, "Register devices", "REST")
+Rel(api, configuration, "Send configuration requests", "REST")
+Rel(api, monitoring, "Fetches monitoring data", "REST")
+
+Rel_D(registration, Devices, "Register devices", "REST")
+Rel_D(registration, registrationDb, "Store registration", "JPA")
+Rel_D(registration, registrationCache, "Cache registration data")
+
+Rel_D(userService, userDb, "Store user data", "JPA")
+Rel_D(userService, userCache, "Cache user data")
+
+Rel_D(monitoring, monitoringDb, "Store telemetry data")
+Rel_D(monitoring, monitoringCache, "Cache telemetry data")
+
+Rel_D(configuration, configurationDb, "Store configuration")
+Rel_D(configuration, configurationCache, "Cache configuration")
+
+Rel_D(monitoring, message_bus, "Fetches monitoring data", "mqtt, async")
+Rel_D(configuration, message_bus, "Produces new configs", "mqtt, async")
+
+Rel_L(Devices, message_bus, "Produces telemetry", "mqtt")
+
+Rel_R(cameras, streaming, "Broadcast live video", "rtmp")
+Rel_U(streaming, cdn, "Broadcast live video", "rtmp")
+
+
+@enduml

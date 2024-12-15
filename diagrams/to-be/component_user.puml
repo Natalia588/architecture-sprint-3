@@ -1,0 +1,25 @@
+@startuml
+title User Service
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Container_Boundary(UserService, "User Service") {
+    Component(restController, "REST API Controller", "Handles REST API user requests")
+    Component(serviceLayer, "Service Layer", "Business logic")
+    Component(repoLayer, "DB Repository Layer", "Data access logic")
+    Component(redisRepo, "Redis repository", "Redis access logic")
+}
+
+Container(db, "Database", "PostgreSQL", "Stores user data")
+Container(cache, "Cache", "Redis", "Cache")
+
+Rel_D(restController, serviceLayer, "Call business logic")
+Rel_D(serviceLayer, repoLayer, "Reads/Writes data")
+Rel_D(serviceLayer, redisRepo, "Reads/Writes data from cache")
+
+Rel_D(repoLayer, db, "Reads/Writes data")
+Rel_D(redisRepo, cache, "Reads/Writes data")
+
+@enduml

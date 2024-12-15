@@ -1,0 +1,39 @@
+@startuml
+title Smart Home ER Diagram
+
+entity User {
+  userId
+  userName
+}
+
+entity House {
+  houseId
+  userId
+}
+
+entity Device {
+  deviceId
+  typeId
+  houseId
+  status
+  serialNumber
+}
+
+entity DeviceType {
+    typeId
+}
+
+entity TelemetryData {
+    id
+    deviceId
+    datetime
+    data
+}
+
+
+House }|-- User
+Device }|-- House
+DeviceType --|{ Device
+TelemetryData }|-- Device
+
+@enduml
