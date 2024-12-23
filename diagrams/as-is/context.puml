@@ -5,18 +5,17 @@ top to bottom direction
 
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
 
-Person(user, "User", "A user of the Smart Home system")
+Person(userWeb, "User of Web App", "Web application of the Smart Home system")
+Person(userApp, "User of Mobile App", "Mobile Application of the Smart Home system")
 
-Container_Boundary(SmartHomeSystem, "Smart Home System") {
-    System(HeatingSubDomain, "Managing heating system", "Managing heating system")
-    System(TemperatureSubDomain, "Monitoring temperature", "Monitoring temperature")
-}
+System(SmartHomeSystem, "Smart Home System", "Managing heating system, monitoring temperature")
 
-System_Ext(sensors, "Temperature Sensors", "Temperature Sensors", "REST API")
-System_Ext(heatingSystem, "Heating System", "Heating System", "REST API")
+System_Ext(sensors, "Temperature Sensors", "Temperature Sensors with REST API for communication")
+System_Ext(heatingSystem, "Heating System", "Heating System with REST API for communication")
 
-Rel(user, SmartHomeSystem, "Uses the system")
-Rel(TemperatureSubDomain,sensors,"Fetches the current temperature")
-Rel(HeatingSubDomain,heatingSystem,"Set configuration")
+Rel(userWeb, SmartHomeSystem, "Uses the system", "http")
+Rel(userApp, SmartHomeSystem, "Uses the system", "http")
+Rel(SmartHomeSystem,sensors,"Fetches the current temperature", "http")
+Rel(SmartHomeSystem,heatingSystem,"Set configuration", "http")
 
 @enduml

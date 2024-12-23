@@ -1,13 +1,14 @@
 @startuml
-title Smart Home Monolith Context Diagram
+title Smart Home Container Diagram
 
 top to bottom direction
 
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
 
-Person(user, "User", "Frontend or Mobile App")
+Person(userWeb, "User of Web App", "Web application of the Smart Home system")
+Person(userApp, "User of Mobile App", "Mobile Application of the Smart Home system")
 
-System_Ext(cdn, "CDN", "CDN for video")
+System_Ext(cdn, "CDN", "CDN (with authentication) for video streaming")
 
 
 System_Boundary(SmartHomeSystem, "Smart Home System") {
@@ -37,9 +38,17 @@ System_Boundary(SmartHomeSystem, "Smart Home System") {
     }
 
     Container_Boundary(MessageBus, "Message Bus") {
-        Container(message_bus, "Message Bus", "RabbitMQ", "Transport for devices events")
+        Container(message_bus, "Message Bus", "Kafka", "Transport for devices events")
+    }
+
+    Container_Boundary(VendorService, "Vendor service") {
+        Container(vendor, "Vendor service", "Java", "Communication with different Vendor API")
+        ContainerDb(vendorDb, "Vendors DB", "PostgreSQL", "Store Vendors info")
+        ContainerDb(vendorCache, "Vendors cache", "Redis", "Vendors info cache")
     }
 }
+
+System_Ext(vendorsApi, "Vendors API", "Vendors API")
 
 System_Boundary(Devices, "Smart Devices") {
     System_Ext(sensors, "Temperature Sensors", "Temperature Sensors")
@@ -49,34 +58,41 @@ System_Boundary(Devices, "Smart Devices") {
     System_Ext(cameras, "Cameras", "Video monitoring")
 }
 
-Rel_D(user, api, "Uses the system", "REST")
-Rel_R(user, cdn, "Watch video", "WebRTC")
+Rel_D(userApp, api, "Uses the system", "http")
+Rel_R(userApp, cdn, "Watch video", "WebRTC")
+Rel_D(userWeb, api, "Uses the system", "http")
+Rel_R(userWeb, cdn, "Watch video", "WebRTC")
 
-Rel(api, userService, "Register / Login user and (or) check permissions", "REST")
-Rel(api, registration, "Register devices", "REST")
-Rel(api, configuration, "Send configuration requests", "REST")
-Rel(api, monitoring, "Fetches monitoring data", "REST")
+Rel(api, userService, "Register / Login user and (or) check permissions", "http")
+Rel(api, registration, "Register vendors, devices", "http")
+Rel(api, configuration, "Send configuration requests", "http")
+Rel(api, monitoring, "Fetches monitoring data", "http")
 
-Rel_D(registration, Devices, "Register devices", "REST")
-Rel_D(registration, registrationDb, "Store registration", "JPA")
-Rel_D(registration, registrationCache, "Cache registration data")
+Rel_D(registration, message_bus, "Register vendors, devices", "async")
+Rel_D(registration, registrationDb, "Writes / Reads registration", "JPA")
+Rel_D(registration, registrationCache, "Writes / Reads registration data")
 
-Rel_D(userService, userDb, "Store user data", "JPA")
-Rel_D(userService, userCache, "Cache user data")
+Rel_D(userService, userDb, "Writes / Reads user data", "JPA")
+Rel_D(userService, userCache, "Writes / Reads user data")
 
-Rel_D(monitoring, monitoringDb, "Store telemetry data")
-Rel_D(monitoring, monitoringCache, "Cache telemetry data")
+Rel_D(monitoring, monitoringDb, "Writes / Reads telemetry data", "JPA")
+Rel_D(monitoring, monitoringCache, "Writes / Reads telemetry data")
 
-Rel_D(configuration, configurationDb, "Store configuration")
-Rel_D(configuration, configurationCache, "Cache configuration")
+Rel_D(configuration, configurationDb, "Writes / Reads configuration", "JPA")
+Rel_D(configuration, configurationCache, "Writes / Reads configuration")
 
-Rel_D(monitoring, message_bus, "Fetches monitoring data", "mqtt, async")
-Rel_D(configuration, message_bus, "Produces new configs", "mqtt, async")
+Rel_D(monitoring, message_bus, "Fetches monitoring data", "async")
+Rel_D(configuration, message_bus, "Produces new configs", "async")
 
-Rel_L(Devices, message_bus, "Produces telemetry", "mqtt")
-
-Rel_R(cameras, streaming, "Broadcast live video", "rtmp")
+Rel_R(vendorsApi, streaming, "Broadcast live video", "rtmp")
 Rel_U(streaming, cdn, "Broadcast live video", "rtmp")
+
+Rel_D(message_bus, vendor, "Consumes/Produces", "async")
+Rel_R(vendor, vendorsApi, "REST API calls", "http")
+Rel_R(vendorsApi, Devices, "Uses")
+
+Rel_D(vendor, vendorDb, "Writes / Reads Vendors data", "JPA")
+Rel_D(vendor, vendorCache, "Writes / Reads Vendors data")
 
 
 @enduml

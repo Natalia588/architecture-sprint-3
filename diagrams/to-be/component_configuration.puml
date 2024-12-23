@@ -15,11 +15,11 @@ Container_Boundary(ConfigurationService, "Configuration Service") {
 
 Container(db, "Database", "PostgreSQL", "Stores config data")
 Container(cache, "Cache", "Redis", "Cache")
-Container(message_bus, "Message Bus", "RabbitMQ", "Transport for devices events")
+Container(message_bus, "Message Bus", "Kafka", "Transport for devices events")
 
 Rel_D(restController, serviceLayer, "Call business logic")
 Rel_R(serviceLayer, manager, "Send commands")
-Rel_R(manager, message_bus, "Write commands to devices topics")
+Rel_R(manager, message_bus, "Write commands to vendors-devices topics")
 Rel_D(serviceLayer, repoLayer, "Reads/Writes data")
 Rel_D(serviceLayer, redisRepo, "Reads/Writes data from cache")
 Rel_D(repoLayer, db, "Reads/Writes data")

@@ -2,38 +2,64 @@
 title Smart Home ER Diagram
 
 entity User {
-  userId
-  userName
+  * userId : NUMBER
+  --
+  * userId : NUMBER
+  * password : VARCHAR (20)
+  * email : VARCHAR (30)
+  firstName : VARCHAR (20)
+  lastName : VARCHAR (20)
 }
 
 entity House {
-  houseId
-  userId
+  * houseId : NUMBER
+  --
+  * houseId : NUMBER
+  * userId : NUMBER
+  * address : VARCHAR(100)
+  displayName : VARCHAR(20)
 }
 
 entity Device {
-  deviceId
-  typeId
-  houseId
-  status
-  serialNumber
+  * deviceId : NUMBER
+  --
+  * deviceId : NUMBER
+  * typeId : NUMBER
+  * houseId : NUMBER
+  * status : NUMBER
+  displayName : VARCHAR(20)
+  description : VARCHAR(50)
+  workflowId : NUMBER
 }
 
 entity DeviceType {
-    typeId
+    * typeId : NUMBER
+    --
+    * typeId : NUMBER
+    description : VARCHAR(50)
 }
 
 entity TelemetryData {
-    id
-    deviceId
-    datetime
-    data
+    * id : NUMBER
+    --
+    * id : NUMBER
+    * deviceId : NUMBER
+    * datetime : DATETIME
+    * data : JSON
 }
 
+entity Workflow {
+    * id : NUMBER
+    --
+    * id : NUMBER
+    * sequence  : JSON
+    description : VARCHAR (100)
+}
 
-House }|-- User
-Device }|-- House
-DeviceType --|{ Device
-TelemetryData }|-- Device
+House }|--|| User
+Device }|--|| House
+DeviceType ||--|{ Device
+TelemetryData }|--|| Device
+Workflow |o--|{ Device
 
 @enduml
