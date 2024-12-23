@@ -1,0 +1,21 @@
+@startuml
+title Smart Home Monolith Context Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(userWeb, "User of Web App", "Web application of the Smart Home system")
+Person(userApp, "User of Mobile App", "Mobile Application of the Smart Home system")
+
+System(SmartHomeSystem, "Smart Home System", "Managing heating system, monitoring temperature")
+
+System_Ext(sensors, "Temperature Sensors", "Temperature Sensors with REST API for communication")
+System_Ext(heatingSystem, "Heating System", "Heating System with REST API for communication")
+
+Rel(userWeb, SmartHomeSystem, "Uses the system", "http")
+Rel(userApp, SmartHomeSystem, "Uses the system", "http")
+Rel(SmartHomeSystem,sensors,"Fetches the current temperature", "http")
+Rel(SmartHomeSystem,heatingSystem,"Set configuration", "http")
+
+@enduml

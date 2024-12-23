@@ -1,0 +1,98 @@
+@startuml
+title Smart Home Container Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(userWeb, "User of Web App", "Web application of the Smart Home system")
+Person(userApp, "User of Mobile App", "Mobile Application of the Smart Home system")
+
+System_Ext(cdn, "CDN", "CDN (with authentication) for video streaming")
+
+
+System_Boundary(SmartHomeSystem, "Smart Home System") {
+    Container(api, "API Gateway", "Java, REST API", "Process requests from Frontend and Mobile App")
+    Container_Boundary(UserService, "User service") {
+        Container(userService, "User service", "Java","User service")
+        ContainerDb(userDb, "User DB", "PostgreSQL")
+        ContainerDb(userCache, "User cache", "Redis")
+    }
+    Container_Boundary(ConfigurationService, "Configuration service") {
+        Container(configuration, "Configuration service", "Java", "Managing smart home system")
+        ContainerDb(configurationDb, "Configuration DB", "PostgreSQL", "Store configuration")
+        ContainerDb(configurationCache, "Configuration cache", "Redis", "Config cache")
+    }
+    Container_Boundary(MonitoringService, "Monitoring service") {
+        Container(monitoring, "Monitoring service", "Java", "Monitoring smart home system")
+        ContainerDb(monitoringDb, "Monitoring DB", "PostgreSQL", "Store telemetry")
+        ContainerDb(monitoringCache, "Monitoring cache", "Redis", "Telemetry cache")
+    }
+    Container_Boundary(StreamingService, "Streaming service") {
+        Container(streaming, "Streaming service", "Nginx RTMP", "Streaming service for real-time video")
+    }
+    Container_Boundary(RegistrationService, "Registration service") {
+        Container(registration, "Registration service", "Java", "Registration service")
+        ContainerDb(registrationDb, "Registration DB", "PostgreSQL", "Store registrations")
+        ContainerDb(registrationCache, "Registration cache", "Redis", "Registrations cache")
+    }
+
+    Container_Boundary(MessageBus, "Message Bus") {
+        Container(message_bus, "Message Bus", "Kafka", "Transport for devices events")
+    }
+
+    Container_Boundary(VendorService, "Vendor service") {
+        Container(vendor, "Vendor service", "Java", "Communication with different Vendor API")
+        ContainerDb(vendorDb, "Vendors DB", "PostgreSQL", "Store Vendors info")
+        ContainerDb(vendorCache, "Vendors cache", "Redis", "Vendors info cache")
+    }
+}
+
+System_Ext(vendorsApi, "Vendors API", "Vendors API")
+
+System_Boundary(Devices, "Smart Devices") {
+    System_Ext(sensors, "Temperature Sensors", "Temperature Sensors")
+    System_Ext(heatingSystem, "Heating System", "Heating Systems")
+    System_Ext(lights, "Light System", "Light Systems")
+    System_Ext(gates, "Gates", "Gates Systems")
+    System_Ext(cameras, "Cameras", "Video monitoring")
+}
+
+Rel_D(userApp, api, "Uses the system", "http")
+Rel_R(userApp, cdn, "Watch video", "WebRTC")
+Rel_D(userWeb, api, "Uses the system", "http")
+Rel_R(userWeb, cdn, "Watch video", "WebRTC")
+
+Rel(api, userService, "Register / Login user and (or) check permissions", "http")
+Rel(api, registration, "Register vendors, devices", "http")
+Rel(api, configuration, "Send configuration requests", "http")
+Rel(api, monitoring, "Fetches monitoring data", "http")
+
+Rel_D(registration, message_bus, "Register vendors, devices", "async")
+Rel_D(registration, registrationDb, "Writes / Reads registration", "JPA")
+Rel_D(registration, registrationCache, "Writes / Reads registration data")
+
+Rel_D(userService, userDb, "Writes / Reads user data", "JPA")
+Rel_D(userService, userCache, "Writes / Reads user data")
+
+Rel_D(monitoring, monitoringDb, "Writes / Reads telemetry data", "JPA")
+Rel_D(monitoring, monitoringCache, "Writes / Reads telemetry data")
+
+Rel_D(configuration, configurationDb, "Writes / Reads configuration", "JPA")
+Rel_D(configuration, configurationCache, "Writes / Reads configuration")
+
+Rel_D(monitoring, message_bus, "Fetches monitoring data", "async")
+Rel_D(configuration, message_bus, "Produces new configs", "async")
+
+Rel_R(vendorsApi, streaming, "Broadcast live video", "rtmp")
+Rel_U(streaming, cdn, "Broadcast live video", "rtmp")
+
+Rel_D(message_bus, vendor, "Consumes/Produces", "async")
+Rel_R(vendor, vendorsApi, "REST API calls", "http")
+Rel_R(vendorsApi, Devices, "Uses")
+
+Rel_D(vendor, vendorDb, "Writes / Reads Vendors data", "JPA")
+Rel_D(vendor, vendorCache, "Writes / Reads Vendors data")
+
+
+@enduml
